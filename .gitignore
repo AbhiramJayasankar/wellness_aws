@@ -110,9 +110,9 @@ Thumbs.db
 *.dbf
 # Ignore all .exe files
 *.exe
-# Ignore build and dist folders inside old
-old/build/
-old/dist/
+# Ignore build and dist folders inside app
+app/build/
+app/dist/
 # Ignore test folder
 test/
 .claude/
