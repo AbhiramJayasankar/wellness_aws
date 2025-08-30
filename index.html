@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Tracker Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .auth-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .auth-form-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        .dashboard {
+            display: none;
+            padding: 2rem;
+            width: 100%;
+            min-height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #ffffff;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: -0.025em;
+        }
+
+        h2 {
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        h3 {
+            color: #ffffff;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #d1d5db;
+            font-weight: 500;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 1rem;
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        input::placeholder {
+            color: #6b7280;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+            letter-spacing: 0.025em;
+        }
+
+        .btn:hover {
+            background: #f3f4f6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .toggle-link {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+
+        .toggle-link:hover {
+            border-bottom-color: #ffffff;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: none;
+            font-size: 0.875rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: #d1d5db;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 3rem;
+        }
+
+        .user-welcome {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+
+        .user-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .user-detail {
+            color: #d1d5db;
+            font-size: 0.875rem;
+        }
+
+        .user-detail strong {
+            color: #ffffff;
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            opacity: 0.8;
+            color: #d1d5db;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 500;
+        }
+
+        .sessions-section {
+            margin-top: 2rem;
+        }
+
+        .sessions-container {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 1rem;
+        }
+
+        .sessions-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sessions-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .sessions-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .session-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .session-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateX(4px);
+        }
+
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .session-date {
+            font-weight: 600;
+            color: #ffffff;
+            font-size: 1rem;
+        }
+
+        .session-blinks {
+            color: #ffffff;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .session-time {
+            color: #9ca3af;
+            font-size: 0.875rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            width: auto;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ffffff;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        @media (max-width: 768px) {
+            .auth-form-container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            .dashboard {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 2rem;
+            }
+
+            .stat-value {
+                font-size: 2.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .session-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-card, .session-card, .user-info {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+
+        /* GDPR Compliance Section */
+        .gdpr-section {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gdpr-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .gdpr-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gdpr-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        }
+
+        .gdpr-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .gdpr-card.danger {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .gdpr-card.danger::before {
+            background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.5), transparent);
+        }
+
+        .gdpr-card.danger:hover {
+            border-color: rgba(239, 68, 68, 0.4);
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        .gdpr-card h3 {
+            margin-bottom: 0.75rem;
+            color: #ffffff;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .gdpr-card p {
+            color: #d1d5db;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .gdpr-btn {
+            width: 100%;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .export-btn {
+            background: rgba(59, 130, 246, 0.1);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .export-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: #ffffff;
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .delete-sessions-btn {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fcd34d;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .delete-sessions-btn:hover {
+            background: rgba(245, 158, 11, 0.2);
+            color: #ffffff;
+            border-color: rgba(245, 158, 11, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .delete-account-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .delete-account-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ffffff;
+            border-color: rgba(239, 68, 68, 0.4);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login/Register Section -->
+        <div id="auth-section" class="auth-section">
+            <div class="auth-form-container">
+                <h1>Eye Tracker</h1>
+                <div class="error" id="error-message"></div>
+                <div class="loading" id="loading">Loading...</div>
+                
+                <!-- Login Form -->
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-username">Username</label>
+                        <input type="text" id="login-username" name="username" placeholder="Enter your username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" name="password" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="btn">Sign In</button>
+                    <p style="text-align: center; margin-top: 1rem; color: #9ca3af;">
+                        Don't have an account? <a href="#" class="toggle-link" onclick="showRegister()">Sign up</a>
+                    </p>
+                </form>
+                
+                <!-- Register Form -->
+                <form id="register-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="register-username">Username</label>
+                        <input type="text" id="register-username" name="username" placeholder="Choose a username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" name="email" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <input type="password" id="register-password" name="password" placeholder="Create a password" required>
+                    </div>
+                    <button type="submit" class="btn">Sign Up</button>
+                    <p style="text-align: center; margin-top: 1rem; color: #9ca3af;">
+                        Already have an account? <a href="#" class="toggle-link" onclick="showLogin()">Sign in</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="dashboard">
+            <div class="header">
+                <h2>Dashboard</h2>
+                <button class="btn logout-btn" onclick="logout()">Logout</button>
+            </div>
+            
+            <div class="user-info" id="user-info">
+                <!-- User info will be populated here -->
+            </div>
+            
+            <div class="stats-grid" id="stats-grid">
+                <!-- Stats cards will be populated here -->
+            </div>
+            
+            <div class="sessions-section">
+                <h2>Recent Sessions</h2>
+                <div id="sessions-list">
+                    <!-- Sessions will be populated here -->
+                </div>
+            </div>
+            
+            <!-- GDPR Compliance Section -->
+            <div class="gdpr-section">
+                <h2>Data Management</h2>
+                <div class="gdpr-actions">
+                    <div class="gdpr-card">
+                        <h3>Export Your Data</h3>
+                        <p>Download all your account data and sessions in JSON format.</p>
+                        <button class="btn gdpr-btn export-btn" onclick="exportData()">Download Data</button>
+                    </div>
+                    
+                    <div class="gdpr-card">
+                        <h3>Delete Sessions</h3>
+                        <p>Permanently delete all your eye tracking sessions while keeping your account.</p>
+                        <button class="btn gdpr-btn delete-sessions-btn" onclick="deleteSessions()">Delete All Sessions</button>
+                    </div>
+                    
+                    <div class="gdpr-card danger">
+                        <h3>Delete Account</h3>
+                        <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
+                        <button class="btn gdpr-btn delete-account-btn" onclick="deleteAccount()">Delete Account</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://df45a1a96ac4.ngrok-free.app';
+        let authToken = localStorage.getItem('authToken');
+
+        // Check if user is already logged in
+        if (authToken) {
+            showDashboard();
+        }
+
+        // Form submissions
+        document.getElementById('login-form').addEventListener('submit', handleLogin);
+        document.getElementById('register-form').addEventListener('submit', handleRegister);
+
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
+        }
+
+        function showLoading(show = true) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showLogin() {
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('register-form').style.display = 'none';
+        }
+
+        function showRegister() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            showLoading(true);
+            
+            const formData = new FormData(e.target);
+            const loginData = {
+                username: formData.get('username'),
+                password: formData.get('password')
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(loginData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    showDashboard();
+                } else {
+                    showError(data.detail || 'Login failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            showLoading(true);
+            
+            const formData = new FormData(e.target);
+            const registerData = {
+                username: formData.get('username'),
+                email: formData.get('email'),
+                password: formData.get('password')
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(registerData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    showDashboard();
+                } else {
+                    showError(data.detail || 'Registration failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function showDashboard() {
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            
+            await loadUserData();
+            await loadSessions();
+        }
+
+        async function loadUserData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/user`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    displayUserInfo(userData);
+                    displayStats(userData);
+                } else {
+                    throw new Error('Failed to load user data');
+                }
+            } catch (error) {
+                showError('Failed to load user data');
+            }
+        }
+
+        async function loadSessions() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/sessions`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+
+                if (response.ok) {
+                    const sessionsData = await response.json();
+                    displaySessions(sessionsData.sessions);
+                } else {
+                    throw new Error('Failed to load sessions');
+                }
+            } catch (error) {
+                showError('Failed to load sessions');
+            }
+        }
+
+        function displayUserInfo(userData) {
+            const userInfoEl = document.getElementById('user-info');
+            const joinDate = new Date(userData.created_at).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            userInfoEl.innerHTML = `
+                <div class="user-welcome">Welcome back, ${userData.username}!</div>
+                <div class="user-details">
+                    <div class="user-detail">
+                        <strong>Email</strong>
+                        ${userData.email}
+                    </div>
+                    <div class="user-detail">
+                        <strong>Member Since</strong>
+                        ${joinDate}
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayStats(userData) {
+            const statsEl = document.getElementById('stats-grid');
+            
+            statsEl.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${userData.total_sessions}</div>
+                    <div class="stat-label">Total Sessions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${userData.total_blinks_all_time.toLocaleString()}</div>
+                    <div class="stat-label">Total Blinks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${userData.total_sessions > 0 ? Math.round(userData.total_blinks_all_time / userData.total_sessions).toLocaleString() : 0}</div>
+                    <div class="stat-label">Avg Blinks/Session</div>
+                </div>
+            `;
+        }
+
+        function displaySessions(sessions) {
+            const sessionsEl = document.getElementById('sessions-list');
+            
+            if (sessions.length === 0) {
+                sessionsEl.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👁️</div>
+                        <p>No sessions recorded yet.</p>
+                        <p style="font-size: 0.875rem; margin-top: 0.5rem;">Your eye tracking sessions will appear here.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            sessionsEl.innerHTML = sessions.slice(0, 20).map(session => {
+                const date = new Date(session.created_at).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                const startTime = session.session_start_time;
+                const endTime = session.session_end_time;
+                
+                return `
+                    <div class="session-card">
+                        <div class="session-header">
+                            <div class="session-date">${date}</div>
+                            <div class="session-blinks">${session.total_blinks.toLocaleString()}</div>
+                        </div>
+                        <div class="session-time">${startTime} → ${endTime}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            authToken = null;
+            document.getElementById('auth-section').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+            showLogin();
+        }
+
+        // GDPR Compliance Functions
+        async function exportData() {
+            if (!confirm('Download your data export? This will include all your account information and sessions.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/user/export`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Create download link
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `eye-tracker-data-export-${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    showError('Data exported successfully!');
+                } else {
+                    const errorData = await response.json();
+                    showError(errorData.detail || 'Failed to export data');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            }
+        }
+
+        async function deleteSessions() {
+            if (!confirm('Are you sure you want to delete ALL your sessions? This action cannot be undone.')) {
+                return;
+            }
+
+            if (!confirm('This will permanently delete all your eye tracking data. Are you absolutely sure?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/user/sessions`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showError(`Successfully deleted ${data.deleted_sessions} sessions.`);
+                    
+                    // Refresh dashboard data
+                    await loadUserData();
+                    await loadSessions();
+                } else {
+                    const errorData = await response.json();
+                    showError(errorData.detail || 'Failed to delete sessions');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            }
+        }
+
+        async function deleteAccount() {
+            if (!confirm('Are you sure you want to DELETE YOUR ENTIRE ACCOUNT? This will permanently delete your account and all data.')) {
+                return;
+            }
+
+            if (!confirm('This action is IRREVERSIBLE. All your data will be permanently lost. Type "DELETE" in the next prompt to confirm.')) {
+                return;
+            }
+
+            const confirmation = prompt('Type "DELETE" to confirm account deletion:');
+            if (confirmation !== 'DELETE') {
+                showError('Account deletion cancelled.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/user`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(`Account deleted successfully. ${data.deleted_sessions} sessions were also removed.`);
+                    
+                    // Log out user
+                    logout();
+                } else {
+                    const errorData = await response.json();
+                    showError(errorData.detail || 'Failed to delete account');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>
