@@ -42,6 +42,9 @@
 ║        ╚═══════════════════════════════════════════════╝                ║
 ║                                                                         ║
 ╚═════════════════════════════════════════════════════════════════════════╝
+
+Web Dashboard : https://eyetracker-dashboard.vercel.app/
+
 ```
 
 ## Setup
@@ -86,8 +89,6 @@ wellness_ssimple/
 │
 ├── webpage/              # Web Frontend
 │   └── index.html        # Dashboard interface
-│
-│ Live Demo: https://eyetracker-dashboard.vercel.app/
 │
 └── README.md            # This file
 ```
