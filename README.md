@@ -1,47 +1,47 @@
 # Wellness Simple
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                          Eye Tracker System                        │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌─────────────────┐              ┌─────────────────┐              │
-│  │   Desktop App   │              │   Web Frontend  │              │
-│  │  (main_app.py)  │              │ (index.html)    │              │
-│  │                 │              │                 │              │
-│  │  • Eye Tracking │              │  • User Auth    │              │
-│  │  • Real-time    │              │  • Dashboard    │              │
-│  │  • Session Data │              │  • GDPR Tools   │              │
-│  │  • System Tray  │              │  • Data Viz     │              │
-│  └─────────┬───────┘              └─────────┬───────┘              │
-│            │                                │                      │
-│            │           HTTP/REST API        │                      │
-│            └────────────────┬───────────────┘                      │
-│                             │                                      │
-│                             ▼                                      │
-│                  ┌─────────────────┐                               │
-│                  │   Backend API   │                               │
-│                  │(backend_postgres│                               │
-│                  │    .py)         │                               │
-│                  │                 │                               │
-│                  │  • JWT Auth     │                               │
-│                  │  • REST Endpoints│                              │
-│                  │  • GDPR APIs    │                               │
-│                  │  • Session Mgmt │                               │
-│                  └─────────┬───────┘                               │
-│                            │                                       │
-│                            │ SQL Queries                           │
-│                            ▼                                       │
-│          ┌─────────────────────────────────────────────┐           │
-│          │                PostgreSQL RDS              │           │
-│          │                                             │           │
-│          │  • Users table (auth data, GDPR compliance)│           │
-│          │  • Sessions table (eye tracking data)      │           │
-│          │  • Foreign key constraints for data integrity│         │
-│          │  • Only accessible via Backend API         │           │
-│          └─────────────────────────────────────────────┘           │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+╔═════════════════════════════════════════════════════════════════════════╗
+║                           Eye Tracker System                            ║
+╠═════════════════════════════════════════════════════════════════════════╣
+║                                                                         ║
+║    ╭─────────────────────────╮      ╭─────────────────────────╮         ║
+║    │      Desktop App        │      │     Web Frontend        │         ║
+║    │     (main_app.py)       │      │     (index.html)        │         ║
+║    │                         │      │                         │         ║
+║    │  Eye Tracking           │      │  User Authentication    │         ║
+║    │  Real-time Analysis     │      │  Interactive Dashboard  │         ║
+║    │  Session Management     │      │  GDPR Compliance Tools  │         ║
+║    │  System Tray Control    │      │  Data Visualization     │         ║
+║    ╰───────────┬─────────────╯      ╰───────────┬─────────────╯         ║
+║                │                                │                       ║
+║                │                                │                       ║
+║                └─────────► HTTP/REST API ◄──────┘                       ║
+║                                  │                                      ║
+║                                  ▼                                      ║
+║                ╭───────────────────────────────────╮                    ║
+║                │      Backend API Server           │                    ║
+║                │    (backend_postgres.py)          │                    ║
+║                │         AWS EC2                   │                    ║
+║                │                                   │                    ║
+║                │      JWT Authentication           │                    ║
+║                │      RESTful Endpoints            │                    ║
+║                │      GDPR Compliance APIs         │                    ║
+║                │      Session Lifecycle Mgmt       │                    ║
+║                ╰─────────────────┬─────────────────╯                    ║
+║                                  │                                      ║
+║                                  │ SQL Queries                          ║
+║                                  ▼                                      ║
+║        ╔═══════════════════════════════════════════════╗                ║
+║        ║            PostgreSQL RDS                     ║                ║
+║        ║                                               ║                ║
+║        ║  users        - Authentication & GDPR         ║                ║
+║        ║  sessions     - Eye tracking metrics          ║                ║
+║        ║  constraints  - Data integrity rules          ║                ║
+║        ║  security    - API-only access                ║                ║
+║        ╚═══════════════════════════════════════════════╝                ║
+║                                                                         ║
+╚═════════════════════════════════════════════════════════════════════════╝
 ```
 
 ## Setup
