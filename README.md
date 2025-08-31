@@ -1,5 +1,73 @@
 # Eye Tracker - Cross Platform Desktop App
 
+A comprehensive eye tracking application with real-time blink detection, web dashboard, and GDPR-compliant data management.
+
+## 🚀 Quick Start Guide
+
+### For End Users
+
+#### 1. **Download & Install Desktop App**
+- Download the latest release for your platform (Windows/macOS/Linux)
+- Run the executable - no installation required
+- Grant camera permissions when prompted
+
+#### 2. **Create Account**
+- Launch the app and click "Sign up"
+- Enter username, email, and password
+- You'll be automatically logged in
+
+#### 3. **Start Eye Tracking**
+- Position yourself in front of your camera
+- The app will automatically detect and track your blinks
+- Session data is recorded in real-time
+- Use system tray to minimize/hide the app
+
+#### 4. **View Your Data**
+- Visit the web dashboard at [your-frontend-url]
+- Login with the same credentials
+- View session history, statistics, and analytics
+- Export or delete your data (GDPR compliance)
+
+### For Developers
+
+#### 1. **Clone Repository**
+```bash
+git clone https://github.com/your-username/wellness_ssimple.git
+cd wellness_ssimple
+```
+
+#### 2. **Backend Setup**
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python backend_postgres.py
+```
+
+#### 3. **Frontend Setup**
+```bash
+cd webpage
+# Open index.html in browser or serve with local server
+python -m http.server 3000
+```
+
+#### 4. **Desktop App Setup**
+```bash
+cd app
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python main_app.py
+```
+
+#### 5. **Build Executable**
+```bash
+cd app
+pyinstaller main_app.spec
+# Find executable in dist/ folder
+```
+
 ## GDPR Compliance
 
 This application implements comprehensive GDPR (General Data Protection Regulation) compliance features to protect user privacy and data rights.
@@ -372,12 +440,205 @@ def test_data_protection():
     # Test secure data transmission
 ```
 
-### CI Pipeline Configuration
+## CI/CD Deployment Architecture
+
+### Current Deployment Setup
+
+The project uses a multi-platform CI/CD approach:
+
+#### 🌐 **Frontend CI/CD (Vercel)**
+- **Platform**: Vercel (automatic deployments)
+- **Trigger**: Git push to main branch
+- **Process**: 
+  - Automatic build and deployment of `webpage/index.html`
+  - Global CDN distribution
+  - Preview deployments for pull requests
+  - Custom domain support with HTTPS
+
+#### 🚀 **Backend CI/CD (AWS EC2)**
+- **Platform**: AWS EC2 with simple deployment script
+- **Trigger**: Cron job or manual execution
+- **Process**:
+  - Simple script checks if HEAD of main branch is new
+  - If new commits detected, pulls latest code from repository
+  - Restarts FastAPI application
+  - Basic health verification
+
+#### 📦 **Desktop App Distribution**
+- **Build Process**: PyInstaller with `main_app.spec`
+- **Platforms**: Windows, macOS, Linux
+- **Distribution**: Manual releases or automated GitHub Actions
+
+### Current Simple Deployment Script (EC2)
+
+Your actual backend deployment uses a simple script that runs on EC2:
+
+```bash
+#!/bin/bash
+# Simple deployment script running on EC2
+# File: /opt/eye-tracker-backend/deploy.sh
+
+set -e  # Exit on any error
+
+# Configuration
+REPO_DIR="/opt/eye-tracker-backend"
+REPO_URL="https://github.com/your-username/wellness_ssimple.git"
+BRANCH="main"
+SERVICE_NAME="eye-tracker-backend"
+
+# Function to get current HEAD
+get_current_head() {
+    git ls-remote origin $BRANCH | cut -f1
+}
+
+# Function to get local HEAD
+get_local_head() {
+    cd $REPO_DIR
+    git rev-parse HEAD
+}
+
+# Main deployment logic
+echo "Checking for updates..."
+
+# Get remote and local HEAD
+REMOTE_HEAD=$(get_current_head)
+LOCAL_HEAD=$(get_local_head)
+
+echo "Remote HEAD: $REMOTE_HEAD"
+echo "Local HEAD:  $LOCAL_HEAD"
+
+# Compare HEADs
+if [ "$REMOTE_HEAD" != "$LOCAL_HEAD" ]; then
+    echo "New commits detected. Starting deployment..."
+    
+    # Navigate to repo directory
+    cd $REPO_DIR
+    
+    # Pull latest changes
+    echo "Pulling latest changes..."
+    git pull origin $BRANCH
+    
+    # Install/update dependencies
+    echo "Installing dependencies..."
+    source venv/bin/activate
+    pip install -r backend/requirements.txt
+    
+    # Restart the service
+    echo "Restarting FastAPI service..."
+    sudo systemctl restart $SERVICE_NAME
+    
+    # Basic health check
+    echo "Waiting for service to start..."
+    sleep 5
+    
+    # Check if service is running
+    if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+        echo "✅ Deployment successful! Service is healthy."
+    else
+        echo "❌ Deployment failed! Service health check failed."
+        exit 1
+    fi
+    
+    echo "Deployment completed successfully!"
+else
+    echo "No new commits. Nothing to deploy."
+fi
+```
+
+### Cron Job Setup
+
+The script runs automatically via cron job:
+
+```bash
+# Crontab entry (runs every 5 minutes)
+# crontab -e
+*/5 * * * * /opt/eye-tracker-backend/deploy.sh >> /var/log/eye-tracker-deploy.log 2>&1
+```
+
+### Systemd Service Configuration
+
+```ini
+# /etc/systemd/system/eye-tracker-backend.service
+[Unit]
+Description=Eye Tracker Backend API
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/eye-tracker-backend/backend
+Environment=PATH=/opt/eye-tracker-backend/venv/bin
+ExecStart=/opt/eye-tracker-backend/venv/bin/python -m uvicorn backend_postgres:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Test Structure Organization
+
+```
+project/
+├── backend/
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   ├── conftest.py              # pytest fixtures
+│   │   ├── test_auth.py             # Authentication tests
+│   │   ├── test_gdpr.py             # GDPR compliance tests
+│   │   ├── test_database.py         # Database tests
+│   │   ├── test_security.py         # Security tests
+│   │   └── test_api_endpoints.py    # API endpoint tests
+│   └── requirements-test.txt        # Test dependencies
+│
+├── webpage/
+│   ├── tests/
+│   │   ├── auth.test.js            # Authentication tests
+│   │   ├── dashboard.test.js       # Dashboard functionality
+│   │   ├── gdpr.test.js            # GDPR compliance tests
+│   │   └── security.test.js        # Security tests
+│   ├── package.json                # Test scripts and dependencies
+│   └── jest.config.js              # Jest configuration
+│
+├── app/
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   ├── test_eye_tracker.py     # Eye tracking tests
+│   │   ├── test_ui.py              # UI component tests
+│   │   ├── test_integration.py     # Backend integration tests
+│   │   └── test_build.py           # PyInstaller build tests
+│   └── requirements-test.txt       # Test dependencies
+│
+├── tests/
+│   ├── integration/                # End-to-end integration tests
+│   │   ├── test_user_journey.py    # Complete user flow tests
+│   │   ├── test_data_sync.py       # Cross-platform data sync tests
+│   │   └── test_performance.py     # Performance tests
+│   └── scripts/
+│       ├── gdpr_compliance_check.py
+│       └── deploy_health_check.py
+│
+└── .github/
+    └── workflows/
+        ├── ci-cd.yml               # Main CI/CD pipeline
+        ├── security-scan.yml       # Security scanning
+        └── performance-test.yml    # Performance testing
+```
+
+### Optional: Enhanced GitHub Actions CI/CD
+
+If you want to upgrade from your simple script to full GitHub Actions CI/CD in the future, here's a sample structure:
+
+<details>
+<summary>Click to expand GitHub Actions configuration</summary>
 
 ```yaml
-# Example GitHub Actions workflow
-name: Eye Tracker CI/CD
-on: [push, pull_request]
+name: Eye Tracker CI/CD Pipeline
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   backend-tests:
@@ -385,47 +646,41 @@ jobs:
     services:
       postgres:
         image: postgres:13
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: test_eyetracker
+    
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
       - name: Install dependencies
-        run: pip install -r backend/requirements.txt
-      - name: Run backend tests
-        run: pytest backend/tests/
-
-  frontend-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-      - name: Run frontend tests
-        run: npm test
-
-  desktop-app-tests:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Python
-        uses: actions/setup-python@v2
-      - name: Install dependencies
-        run: pip install -r app/requirements.txt
-      - name: Run app tests
-        run: pytest app/tests/
-      - name: Build executable
-        run: pyinstaller app/main_app.spec
-
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Security vulnerability scan
         run: |
-          # SAST tools for code analysis
-          # Dependency vulnerability scanning
-          # GDPR compliance verification
+          cd backend
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Run tests
+        run: |
+          cd backend
+          pytest tests/
+  
+  deploy-backend:
+    needs: backend-tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            cd /opt/eye-tracker-backend
+            ./deploy.sh
 ```
+
+</details>
