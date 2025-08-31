@@ -1,412 +1,431 @@
-# Blink Tracker
+# Eye Tracker - Cross Platform Desktop App
 
-A comprehensive blink detection and tracking application with real-time monitoring, user authentication, and web dashboard.
+## GDPR Compliance
 
-## 🌐 Live Demo
+This application implements comprehensive GDPR (General Data Protection Regulation) compliance features to protect user privacy and data rights.
 
-**Website**: [https://eyetracker-dashboard.vercel.app/](https://eyetracker-dashboard.vercel.app/)
+### Backend Implementation (backend/backend_postgres.py)
 
-## 📋 Overview
+The FastAPI backend includes the following GDPR compliance endpoints:
 
-Blink Tracker is a full-stack application that uses computer vision to detect and track eye blinks in real-time. The system consists of:
+#### Right to Data Portability
+- **Endpoint**: `GET /user/export`
+- **Description**: Allows users to export all their personal data in JSON format
+- **Includes**: User account information, all session data, and summary statistics
+- **Format**: Structured JSON with timestamp for audit purposes
 
-- **Desktop Application**: Real-time blink detection using MediaPipe
-- **Backend API**: FastAPI-based REST API with PostgreSQL database
-- **Web Dashboard**: Modern React-style web interface for data visualization
-- **Cloud Infrastructure**: AWS EC2 + RDS deployment with CI/CD
+#### Right to Erasure (Right to be Forgotten)
+- **Delete Sessions**: `DELETE /user/sessions`
+  - Permanently removes all eye tracking sessions for the user
+  - Maintains user account while clearing all session history
+  - Returns count of deleted sessions for confirmation
 
-## 🏗️ Architecture
+- **Delete Account**: `DELETE /user`
+  - Complete account deletion including all associated data
+  - Removes user account and all related sessions (respects foreign key constraints)
+  - Irreversible operation with proper cascade deletion
 
-### High-Level System Architecture
+### Frontend Implementation (webpage/index.html)
+
+The web dashboard provides user-friendly GDPR controls:
+
+#### Data Management Section
+- **Export Your Data**: Download complete data export in JSON format
+- **Delete Sessions**: Clear all eye tracking history while preserving account
+- **Delete Account**: Complete account removal with multiple confirmation steps
+
+#### User Experience Features
+- Multi-step confirmation for destructive actions
+- Clear warnings about irreversible operations
+- Immediate feedback on successful operations
+- Automatic dashboard refresh after data modifications
+
+#### Security Measures
+- JWT token authentication for all GDPR operations
+- Confirmation prompts with typed verification for account deletion
+- User must type "DELETE" to confirm account removal
+- Clear distinction between session deletion and account deletion
+
+### GDPR Rights Addressed
+1. **Right to Access**: Users can view all their data through the dashboard
+2. **Right to Data Portability**: Complete data export functionality
+3. **Right to Rectification**: Users can manage their account information
+4. **Right to Erasure**: Granular deletion options (sessions only or complete account)
+5. **Data Minimization**: Only necessary data is collected and stored
+6. **Consent**: Clear user interface for data management decisions
+
+## Security
+
+### Current Security Implementation (backend/backend_postgres.py)
+
+#### Authentication & Authorization
+- **JWT Token Authentication**: Secure token-based authentication using HS256 algorithm
+  - 24-hour token expiration for session security
+  - Proper token verification with error handling for expired/invalid tokens
+- **Password Security**: SHA256 hashing for password storage (lines 65-66)
+- **Bearer Token Protection**: All sensitive endpoints protected with HTTPBearer security
+
+#### Database Security
+- **Environment Variables**: Database credentials stored in `.env` file, not hardcoded
+- **SQL Injection Prevention**: Parameterized queries using psycopg2 with `%s` placeholders
+- **Connection Management**: Proper database connection handling with context managers
+
+#### API Security
+- **CORS Configuration**: Currently allows all origins (line 26) - acceptable for development
+- **Input Validation**: Pydantic models for request validation
+- **Error Handling**: Structured error responses without exposing sensitive information
+
+### Security Improvements Planned (Given More Time)
+
+#### Enhanced Password Security
+- **Upgrade to bcrypt/scrypt**: Replace SHA256 with more secure password hashing algorithms
+- **Salt Implementation**: Add unique salts for each password hash
+- **Password Strength Requirements**: Implement minimum complexity requirements
+
+#### Advanced Authentication
+- **Multi-Factor Authentication (MFA)**: Add TOTP/SMS-based 2FA
+- **Refresh Tokens**: Implement refresh token rotation for better session management
+- **Rate Limiting**: Add request rate limiting to prevent brute force attacks
+- **Account Lockout**: Temporary lockout after failed login attempts
+
+#### Infrastructure Security
+- **HTTPS Enforcement**: Ensure all communications are encrypted in production
+- **CORS Hardening**: Restrict allowed origins to specific domains in production
+- **Security Headers**: Add security headers (HSTS, CSP, X-Frame-Options)
+- **Input Sanitization**: Enhanced input validation and sanitization
+
+#### Database Security
+- **Database Connection Encryption**: SSL/TLS for database connections
+- **Database User Permissions**: Principle of least privilege for database user
+- **Audit Logging**: Comprehensive logging of all database operations
+- **Backup Encryption**: Encrypted database backups
+
+#### Monitoring & Compliance
+- **Security Monitoring**: Real-time security event monitoring
+- **Penetration Testing**: Regular security assessments
+- **Compliance Audits**: Regular GDPR and security compliance reviews
+- **Incident Response Plan**: Documented security incident procedures
+
+## High-Level Architecture
+
+### Component Overview
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Desktop App   │    │   Web Dashboard │    │   CI/CD Pipeline│
-│   (Python/CV)   │    │   (HTML/JS/CSS) │    │   (GitHub)      │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          │ HTTP/REST API        │ HTTP/REST API        │ Auto Deploy
-          │                      │                      │
-          └──────────────────────┼──────────────────────┘
-                                 │
-                         ┌───────▼───────┐
-                         │  Backend API  │
-                         │  (FastAPI)    │
-                         │  on EC2       │
-                         └───────┬───────┘
-                                 │
-                         ┌───────▼───────┐
-                         │  PostgreSQL   │
-                         │  Database     │
-                         │  on RDS       │
-                         └───────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                          Eye Tracker System                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌─────────────────┐              ┌─────────────────┐              │
+│  │   Desktop App   │              │   Web Frontend  │              │
+│  │  (main_app.py)  │              │ (index.html)    │              │
+│  │                 │              │                 │              │
+│  │  • Eye Tracking │              │  • User Auth    │              │
+│  │  • Real-time    │              │  • Dashboard    │              │
+│  │  • Session Data │              │  • GDPR Tools   │              │
+│  │  • System Tray  │              │  • Data Viz     │              │
+│  └─────────┬───────┘              └─────────┬───────┘              │
+│            │                                │                      │
+│            │           HTTP/REST API        │                      │
+│            └────────────────┬───────────────┘                      │
+│                             │                                      │
+│                             ▼                                      │
+│                  ┌─────────────────┐                               │
+│                  │   Backend API   │                               │
+│                  │(backend_postgres│                               │
+│                  │    .py)         │                               │
+│                  │                 │                               │
+│                  │  • JWT Auth     │                               │
+│                  │  • REST Endpoints│                              │
+│                  │  • GDPR APIs    │                               │
+│                  │  • Session Mgmt │                               │
+│                  └─────────┬───────┘                               │
+│                            │                                       │
+│                            │ SQL Queries                           │
+│                            ▼                                       │
+│          ┌─────────────────────────────────────────────┐           │
+│          │                PostgreSQL RDS              │           │
+│          │                                             │           │
+│          │  • Users table (auth data, GDPR compliance)│           │
+│          │  • Sessions table (eye tracking data)      │           │
+│          │  • Foreign key constraints for data integrity│         │
+│          │  • Only accessible via Backend API         │           │
+│          └─────────────────────────────────────────────┘           │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Interaction Flow
 
-1. **Desktop App** → Captures blinks → Sends data to Backend API
-2. **Web Dashboard** → Authenticates users → Displays blink statistics
-3. **Backend API** → Validates requests → Stores/retrieves data from PostgreSQL
-4. **CI/CD** → Auto-deploys backend to EC2 and frontend to Vercel
+1. **Desktop Application (app/main_app.py)**
+   - Built with PySide6 for cross-platform GUI
+   - Uses OpenCV + MediaPipe for real-time eye tracking
+   - Authenticates with backend using JWT tokens
+   - Sends session data to backend on app close
+   - Packaged as standalone executable using PyInstaller (main_app.spec)
 
-## 🚀 Features
+2. **Web Frontend (webpage/index.html)**
+   - Single-page application with vanilla JavaScript
+   - Responsive design with glassmorphism UI
+   - Handles user authentication (login/register)
+   - Provides data visualization and session management
+   - Implements GDPR compliance controls (export/delete data)
+   - Hosted on Vercel for global CDN distribution
 
-### Desktop Application
-- Real-time blink detection using MediaPipe
-- Session-based tracking
-- Automatic data synchronization with backend
-- Executable packaging with PyInstaller
+3. **Backend API (backend/backend_postgres.py)**
+   - FastAPI REST API with automatic OpenAPI documentation
+   - JWT-based authentication with token expiration
+   - PostgreSQL database with RDS for scalability
+   - GDPR compliance endpoints (export, delete sessions, delete account)
+   - Deployed on AWS EC2 with RDS database
 
-### Web Dashboard
-- User authentication (register/login)
-- Real-time session statistics
-- Historical data visualization
-- GDPR compliance features
-- Responsive modern design
+### Deployment Architecture
 
-### Backend API
-- JWT-based authentication
-- RESTful API endpoints
-- PostgreSQL database integration
-- GDPR data export/deletion
-- CORS-enabled for web integration
-
-## 🛠️ Installation & Setup
-
-### Prerequisites
-
-- Python 3.8+
-- Node.js (for development)
-- PostgreSQL database
-- AWS account (for deployment)
-
-### Local Development Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd wellness_ssimple
-   ```
-
-2. **Set up Python environment**
-   ```bash
-   python -m venv eye
-   eye\Scripts\activate  # Windows
-   pip install -r requirements.txt
-   ```
-
-3. **Configure environment variables**
-   Create `test/.env` file:
-   ```env
-   DB_HOST=your-db-host
-   DB_NAME=eyedatabase
-   DB_USER=eyeuser
-   DB_PASSWORD=eyepassword
-   DB_PORT=5432
-   SECRET_KEY=your-secret-key
-   ```
-
-4. **Run the backend**
-   ```bash
-   cd backend
-   python backend_postgres.py
-   ```
-
-5. **Open the web dashboard**
-   Open `webpage/index.html` in a browser or serve via local server
-
-### PyInstaller Executable Creation
-
-To create a standalone executable from the desktop application:
-
-1. **Navigate to project root**
-   ```bash
-   cd wellness_ssimple
-   ```
-
-2. **Use the spec file from old directory**
-   ```bash
-   pyinstaller old/main_app.spec
-   ```
-
-3. **Requirements for spec file**
-   - Ensure `main_app.py` exists in root directory
-   - Include `icon.ico` file
-   - MediaPipe data files are automatically collected
-   - Output will be a single executable file
-
-4. **Spec file configuration**
-   ```python
-   # Key configurations in main_app.spec:
-   - console=False          # No console window
-   - upx=True              # Compression enabled
-   - icon=['icon.ico']     # Application icon
-   - collect_data_files('mediapipe')  # Include MediaPipe assets
-   ```
-
-## 🌐 Deployment
-
-### Backend (EC2)
-- **Platform**: AWS EC2 instance
-- **Database**: AWS RDS PostgreSQL
-- **CI/CD**: GitHub Actions
-- **Environment**: Production environment variables from `test/.env`
-
-### Frontend (Vercel)
-- **Platform**: Vercel hosting
-- **Source**: `webpage/index.html`
-- **CI/CD**: Auto-deployment on git push
-- **URL**: [https://eyetracker-dashboard.vercel.app/](https://eyetracker-dashboard.vercel.app/)
-
-### Database (RDS)
-- **Engine**: PostgreSQL
-- **Host**: `eyetracker-db.cuzmyoe2kikx.us-east-1.rds.amazonaws.com`
-- **Port**: 5432
-- **Security**: VPC-secured, encrypted connections
-
-## 🔒 Security Implementation
-
-### Current Security Measures
-
-1. **Authentication & Authorization**
-   - JWT tokens with 24-hour expiration
-   - Password hashing using SHA-256
-   - Bearer token authentication for API endpoints
-
-2. **Database Security**
-   - PostgreSQL with encrypted connections
-   - Environment variable configuration
-   - Input sanitization and parameterized queries
-
-3. **API Security**
-   - CORS configuration
-   - Request validation with Pydantic models
-   - Error handling without information leakage
-
-### Security Improvements (Given More Time)
-
-1. **Enhanced Authentication**
-   - Implement bcrypt/Argon2 for password hashing
-   - Add refresh tokens for better session management
-   - Multi-factor authentication (MFA)
-   - Rate limiting and brute force protection
-
-2. **API Security**
-   - Input validation and sanitization
-   - SQL injection prevention (already partially implemented)
-   - API versioning and deprecation strategies
-   - Request/response logging and monitoring
-
-3. **Infrastructure Security**
-   - SSL/TLS certificates for all endpoints
-   - VPN/Private subnets for database access
-   - Security groups and firewall configurations
-   - Regular security audits and penetration testing
-
-4. **Data Security**
-   - Database encryption at rest
-   - Backup encryption
-   - Data anonymization for development environments
-   - Secure key management (AWS KMS)
-
-## 🛡️ GDPR Compliance
-
-### Current Implementation
-
-1. **Data Rights**
-   - **Right to Access**: Users can view all their data through the dashboard
-   - **Right to Portability**: Export all user data in JSON format
-   - **Right to Erasure**: Delete all sessions or entire account
-   - **Right to Rectification**: Users can update their account information
-
-2. **Data Processing**
-   - Clear purpose limitation (blink tracking for wellness)
-   - Data minimization (only necessary blink data collected)
-   - Explicit consent through account registration
-
-3. **Web Dashboard Features**
-   - "Export Your Data" button - downloads complete data export
-   - "Delete Sessions" - removes all tracking data while keeping account
-   - "Delete Account" - complete account and data removal
-   - Confirmation dialogs for destructive actions
-
-### GDPR Improvements (Given More Time)
-
-1. **Enhanced Consent Management**
-   - Granular consent options for different data types
-   - Cookie consent banners
-   - Consent withdrawal mechanisms
-   - Audit trail of consent changes
-
-2. **Privacy by Design**
-   - Data Protection Impact Assessments (DPIA)
-   - Privacy-preserving analytics
-   - Automatic data retention policies
-   - Data pseudonymization techniques
-
-3. **Legal Compliance**
-   - Privacy policy and terms of service
-   - Data Processing Agreements (DPA)
-   - Breach notification procedures
-   - Regular compliance audits
-
-4. **Technical Measures**
-   - Data anonymization for analytics
-   - Automated data deletion workflows
-   - Enhanced logging for compliance reporting
-   - Geographic data residency controls
-
-## 🧪 Testing Strategy
-
-### Proposed Test Cases for CI Pipeline
-
-#### Unit Tests
-```python
-# Backend API Tests
-def test_user_registration():
-    """Test user can register with valid credentials"""
-    
-def test_user_login():
-    """Test user can login with correct credentials"""
-    
-def test_invalid_login():
-    """Test login fails with invalid credentials"""
-    
-def test_token_expiration():
-    """Test JWT token expiration handling"""
-    
-def test_blink_session_creation():
-    """Test creation of new blink tracking session"""
-    
-def test_data_export():
-    """Test GDPR data export functionality"""
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   User Device   │    │   Vercel CDN    │    │   AWS Cloud     │
+│                 │    │                 │    │                 │
+│  Desktop App ───┼────┼─── Web App ─────┼────┼─── EC2 + RDS   │
+│  (PyInstaller)  │    │  (index.html)   │    │  (FastAPI +     │
+│                 │    │                 │    │   PostgreSQL)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-#### Integration Tests
+## Test Cases for CI Pipeline
+
+### 1. Backend API Tests (backend/backend_postgres.py)
+
+#### Authentication Tests
+```python
+def test_user_registration():
+    # Test valid user registration
+    # Test duplicate username/email rejection
+    # Test password hashing
+
+def test_user_login():
+    # Test valid login credentials
+    # Test invalid credentials rejection
+    # Test JWT token generation
+
+def test_jwt_token_validation():
+    # Test valid token authentication
+    # Test expired token rejection
+    # Test invalid token rejection
+```
+
+#### GDPR Compliance Tests
+```python
+def test_user_data_export():
+    # Test complete data export functionality
+    # Verify all user data is included
+    # Test export timestamp generation
+
+def test_session_deletion():
+    # Test deletion of all user sessions
+    # Verify user account remains intact
+    # Test deletion count accuracy
+
+def test_account_deletion():
+    # Test complete account deletion
+    # Verify cascade deletion of sessions
+    # Test referential integrity
+```
+
+#### Database Tests
 ```python
 def test_database_connection():
-    """Test PostgreSQL database connectivity"""
-    
-def test_api_authentication_flow():
-    """Test complete auth flow from registration to API access"""
-    
-def test_session_data_persistence():
-    """Test blink session data is correctly stored and retrieved"""
+    # Test PostgreSQL connection establishment
+    # Test connection pooling
+    # Test connection error handling
+
+def test_sql_injection_protection():
+    # Test parameterized queries
+    # Verify no SQL injection vulnerabilities
+    # Test input sanitization
 ```
 
-#### Frontend Tests
+### 2. Frontend Tests (webpage/index.html)
+
+#### UI Functionality Tests
 ```javascript
-// Web Dashboard Tests
-describe('Authentication', () => {
-  test('User can register new account', async () => {});
-  test('User can login to existing account', async () => {});
-  test('Dashboard displays after successful login', async () => {});
+describe('Authentication Flow', () => {
+    test('login form validation', () => {
+        // Test required field validation
+        // Test form submission
+        // Test error message display
+    });
+
+    test('registration form validation', () => {
+        // Test email format validation
+        // Test password requirements
+        // Test form submission
+    });
 });
 
-describe('GDPR Compliance', () => {
-  test('Export data functionality works', async () => {});
-  test('Delete sessions removes data', async () => {});
-  test('Account deletion works completely', async () => {});
+describe('Dashboard Features', () => {
+    test('session data display', () => {
+        // Test data loading and rendering
+        // Test empty state handling
+        // Test statistics calculation
+    });
+
+    test('GDPR compliance controls', () => {
+        // Test data export functionality
+        // Test session deletion confirmation
+        // Test account deletion workflow
+    });
 });
 ```
 
-#### End-to-End Tests
+#### Security Tests
+```javascript
+describe('Security Measures', () => {
+    test('token storage and handling', () => {
+        // Test localStorage token management
+        // Test automatic token cleanup
+        // Test authentication header inclusion
+    });
+
+    test('XSS protection', () => {
+        // Test input sanitization
+        // Test content security policy
+        // Test DOM manipulation safety
+    });
+});
+```
+
+### 3. Desktop Application Tests (app/main_app.py)
+
+#### Core Functionality Tests
 ```python
-def test_complete_blink_tracking_workflow():
-    """Test complete flow from desktop app to web dashboard"""
-    
-def test_gdpr_data_lifecycle():
-    """Test complete GDPR data lifecycle"""
+def test_eye_tracker_initialization():
+    # Test camera detection and initialization
+    # Test MediaPipe model loading
+    # Test configuration validation
+
+def test_session_data_collection():
+    # Test blink detection accuracy
+    # Test session timing
+    # Test data aggregation
+
+def test_backend_integration():
+    # Test authentication with backend
+    # Test session data transmission
+    # Test network error handling
 ```
 
-### CI/CD Pipeline Configuration
+#### PyInstaller Build Tests
+```python
+def test_executable_creation():
+    # Test main_app.spec configuration
+    # Verify all dependencies are included
+    # Test icon and resource embedding
+
+def test_cross_platform_compatibility():
+    # Test Windows executable
+    # Test macOS application bundle
+    # Test Linux AppImage/binary
+```
+
+### 4. Integration Tests
+
+#### End-to-End User Flow
+```python
+def test_complete_user_journey():
+    # Register new user via web frontend
+    # Login to desktop application
+    # Record eye tracking session
+    # View session data on web dashboard
+    # Export user data (GDPR compliance)
+    # Delete account and verify data removal
+
+def test_cross_platform_data_sync():
+    # Create session on desktop app
+    # Verify data appears on web dashboard
+    # Test real-time synchronization
+```
+
+#### Performance Tests
+```python
+def test_api_response_times():
+    # Test authentication endpoints (< 200ms)
+    # Test data retrieval endpoints (< 500ms)
+    # Test GDPR export endpoints (< 2000ms)
+
+def test_desktop_app_performance():
+    # Test real-time eye tracking (30 FPS)
+    # Test memory usage over time
+    # Test CPU usage optimization
+```
+
+### 5. Security Tests
+
+#### Vulnerability Assessment
+```python
+def test_authentication_security():
+    # Test password hashing strength
+    # Test JWT token security
+    # Test session management
+
+def test_data_protection():
+    # Test GDPR compliance implementation
+    # Test data encryption at rest
+    # Test secure data transmission
+```
+
+### CI Pipeline Configuration
 
 ```yaml
-# Proposed GitHub Actions workflow
-name: Test and Deploy
+# Example GitHub Actions workflow
+name: Eye Tracker CI/CD
 on: [push, pull_request]
 
 jobs:
-  test:
+  backend-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+      - name: Run backend tests
+        run: pytest backend/tests/
+
+  frontend-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+      - name: Run frontend tests
+        run: npm test
+
+  desktop-app-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
         uses: actions/setup-python@v2
       - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run unit tests
-        run: pytest tests/unit/
-      - name: Run integration tests
-        run: pytest tests/integration/
+        run: pip install -r app/requirements.txt
+      - name: Run app tests
+        run: pytest app/tests/
+      - name: Build executable
+        run: pyinstaller app/main_app.spec
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Security vulnerability scan
+        run: |
+          # SAST tools for code analysis
+          # Dependency vulnerability scanning
+          # GDPR compliance verification
 ```
-
-## 📊 API Documentation
-
-### Authentication Endpoints
-- `POST /register` - User registration
-- `POST /login` - User authentication
-
-### User Endpoints
-- `GET /user` - Get user profile
-- `GET /user/export` - Export user data (GDPR)
-- `DELETE /user` - Delete account (GDPR)
-- `DELETE /user/sessions` - Delete all sessions (GDPR)
-
-### Session Endpoints
-- `GET /sessions` - Get user sessions
-- `POST /sessions` - Create new session
-
-## 📁 Project Structure
-
-```
-wellness_ssimple/
-├── backend/
-│   └── backend_postgres.py    # FastAPI backend
-├── webpage/
-│   └── index.html            # Web dashboard
-├── test/
-│   └── .env                  # Environment configuration
-├── old/
-│   └── main_app.spec         # PyInstaller spec file
-├── eye/                      # Python virtual environment
-└── README.md
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-```env
-# Database
-DB_HOST=eyetracker-db.cuzmyoe2kikx.us-east-1.rds.amazonaws.com
-DB_NAME=eyedatabase
-DB_USER=eyeuser
-DB_PASSWORD=eyepassword
-DB_PORT=5432
-
-# Security
-SECRET_KEY=your-secret-key-here
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue in the GitHub repository
-- Check the documentation above
-- Review the API endpoints for integration help
-
----
-
-**Built with**: Python, FastAPI, PostgreSQL, MediaPipe, HTML/CSS/JavaScript, AWS EC2/RDS, Vercel
